@@ -41,7 +41,14 @@ if __name__ == '__main__':
     print(existing_customers.iloc[19])
 
     #splitting the data in a train and test set using the train_test_split function
+    features = existing_customers.iloc[:, :-1]
+    label = existing_customers.iloc[:, -1]
 
+    features_train, features_test, label_train, label_test = train_test_split(features, label, test_size=0.3,random_state=42)
+    print(features_train)
+    print(features_test)
+    print(label_train)
+    print(label_test)
 
 
 
