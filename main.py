@@ -11,6 +11,7 @@ from sklearn.model_selection import cross_val_score
 import matplotlib.pyplot as plt
 from xgboost import XGBClassifier
 from sklearn.tree import DecisionTreeClassifier, export_graphviz
+from sklearn.ensemble import BaggingClassifier,AdaBoostClassifier, GradientBoostingClassifier, RandomForestClassifier
 from sklearn import tree
 import graphviz
 
@@ -19,6 +20,9 @@ if __name__ == '__main__':
     # read input data and check which columns has missing values
     existing_customers = pd.read_csv("data/existing-customers.csv", sep=';', index_col=0)
     potential_customers = pd.read_csv("data/potential-customers.csv", sep=';', index_col=0)
+    print(potential_customers.columns)
+    print(existing_customers.columns)
+
 
     original_data = existing_customers.replace('', pd.NaT)
     original_data2 = potential_customers.replace('', pd.NaT)
@@ -61,6 +65,9 @@ if __name__ == '__main__':
     print(y_train)
     print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     print(y_test)
+
+
+
 
     #apply classifier1: GaussianNB()
     gnbModel = GaussianNB()
@@ -136,8 +143,8 @@ if __name__ == '__main__':
     grid_search.fit(X_train, y_train)
     print("Best max depth:", grid_search.best_params_['max_depth'])
     print("Best score:", grid_search.best_score_)
-
-    clf = DecisionTreeClassifier(max_depth=3)
+    # Decision tree using best max depth 8
+    clf = DecisionTreeClassifier(max_depth=8)
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
     accuracy = clf.score(X_test, y_test)
@@ -150,10 +157,80 @@ if __name__ == '__main__':
                                special_characters=True)
 
     # Use the GraphViz library to display the decision tree
-    graph = graphviz.Source(dot_data)
-    graph.render("decisionTree.dot")  # save as pdf
-    graph.view()
+    #graph = graphviz.Source(dot_data)
+    #graph.render("decisionTree.dot")  # save as pdf
+    #graph.view()
+    print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
 
+    #use bagging
+    base_estimator = DecisionTreeClassifier()
+    param_grid = {'n_estimators': [10, 50, 100, 150, 200]}
+    bagging = BaggingClassifier(estimator=base_estimator)
+    grid_search = GridSearchCV(bagging, param_grid=param_grid, cv=5)
+
+    grid_search.fit(X_train, y_train)
+    print("Bagging")
+    print("Best parameters: ", grid_search.best_params_)
+    print("Best score: ", grid_search.best_score_)
+    #accuracy = bagging.score(X_test, y_test)
+    #print("Accuracy:", accuracy)
+    print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+
+    #use Boosting
+    base_estimator = DecisionTreeClassifier(max_depth=8)
+    ada_boost = AdaBoostClassifier(estimator=base_estimator, n_estimators=50, random_state=42)
+    ada_boost.fit(X_train, y_train)
+
+    y_pred = ada_boost.predict(X_test)
+    accuracy = ada_boost.score(X_test, y_test)
+    print("Boosting")
+    print(f"Accuracy: {accuracy}")
+
+    param_grid = {
+        'n_estimators': [50, 100, 150, 200, 250]
+    }
+    gb_clf = GradientBoostingClassifier()
+    grid_search = GridSearchCV(gb_clf, param_grid, cv=5)
+    grid_search.fit(X_train, y_train)
+    print("Best Hyperparameters:", grid_search.best_params_)
+    print("Best Accuracy Score:", grid_search.best_score_)
+
+    print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+    param_grid = {
+        'n_estimators': [50, 100, 150, 200, 250]
+    }
+    rfc = RandomForestClassifier(n_estimators=100, random_state=42)
+    rfc.fit(X_train, y_train)
+    y_pred = rfc.predict(X_test)
+    accuracy = rfc.score(X_test, y_test)
+    print("RandomForestClassifier")
+    print(f"Accuracy: {accuracy}")
+    rfc = RandomForestClassifier(random_state=42)
+    param_grid = {
+        'n_estimators': [50, 100, 150, 200, 250]
+    }
+    grid_search = GridSearchCV(estimator=rfc, param_grid=param_grid, cv=5)
+    grid_search.fit(X_train, y_train)
+    print("Best Hyperparameters:", grid_search.best_params_)
+    print("Best Accuracy Score:", grid_search.best_score_)
+
+
+
+
+    # Predict the labels of potential customers
+    X_pred = potential_customers.iloc[:, :-1]
+    y_pred = potential_customers.iloc[:, -1]
+    X = existing_customers.iloc[:, :-1]
+    Y = existing_customers.iloc[:, -1]
+    base_estimator = DecisionTreeClassifier(max_depth=8)
+    ada_boost = AdaBoostClassifier(estimator=base_estimator, n_estimators=250, random_state=42)
+    ada_boost.fit(X, Y)
+
+    y_pred = ada_boost.predict(X_pred)
+    potential_customers = pd.read_csv("data/potential-customers.csv", sep=';', index_col=0)
+
+    potential_customers['class'] = y_pred
+    #potential_customers.to_csv("data/potential-customers.csv", index=False)
 
 
 
