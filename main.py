@@ -38,9 +38,13 @@ if __name__ == '__main__':
     # convert categorical attributes to numerical attributes using the LabelEncoder
     le = LabelEncoder()
     categoricalColumns = ['class','workclass', 'education', 'marital-status', 'relationship','occupation', 'race', 'sex', 'native-country']
+    categoricalColumnsPot = ['workclass', 'education', 'marital-status', 'relationship','occupation', 'race', 'sex', 'native-country']
+
     for col in categoricalColumns:
         existing_customers[col] = le.fit_transform(existing_customers[col])
 
+    for col in categoricalColumnsPot:
+        potential_customers[col] = le.fit_transform(potential_customers[col])
     print(existing_customers.iloc[19])
     print(existing_customers)
 
@@ -48,9 +52,14 @@ if __name__ == '__main__':
     scaler = preprocessing.MinMaxScaler()
     columnsToBeNormalized =  ['age', 'workclass', 'education', 'education-num', 'occupation', 'race', 'sex','capital-gain','capital-loss', 'hours-per-week', 'native-country']
     dataToBeNormalized = existing_customers[columnsToBeNormalized]
+    dataToBeNormalizedPotential = potential_customers[columnsToBeNormalized]
     scaler.fit(dataToBeNormalized)
+    scaler.fit(dataToBeNormalizedPotential)
     normalizedData = scaler.transform(dataToBeNormalized)
+    normalizedDataPotential = scaler.transform(dataToBeNormalizedPotential)
+
     existing_customers[columnsToBeNormalized] = normalizedData
+    potential_customers[columnsToBeNormalized] = normalizedDataPotential
     print(existing_customers.iloc[21389])
 
     #splitting the data in a train and test set using the train_test_split function
@@ -218,8 +227,8 @@ if __name__ == '__main__':
 
 
     # Predict the labels of potential customers
-    X_pred = potential_customers.iloc[:, :-1]
-    y_pred = potential_customers.iloc[:, -1]
+    X_pred = potential_customers.iloc[:, :]
+    #y_pred = potential_customers.iloc[:, -1]
     X = existing_customers.iloc[:, :-1]
     Y = existing_customers.iloc[:, -1]
     base_estimator = DecisionTreeClassifier(max_depth=8)
@@ -230,7 +239,7 @@ if __name__ == '__main__':
     potential_customers = pd.read_csv("data/potential-customers.csv", sep=';', index_col=0)
 
     potential_customers['class'] = y_pred
-    #potential_customers.to_csv("data/potential-customers.csv", index=False)
+    potential_customers.to_csv("data/potential-customers.csv", index=False)
 
 
 
