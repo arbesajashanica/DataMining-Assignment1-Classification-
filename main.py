@@ -12,6 +12,9 @@ import matplotlib.pyplot as plt
 from xgboost import XGBClassifier
 from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from sklearn.ensemble import BaggingClassifier,AdaBoostClassifier, GradientBoostingClassifier, RandomForestClassifier
+from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.neighbors import NearestNeighbors
+
 from sklearn import tree
 import graphviz
 
@@ -236,12 +239,35 @@ if __name__ == '__main__':
     ada_boost.fit(X, Y)
 
     y_pred = ada_boost.predict(X_pred)
-    potential_customers = pd.read_csv("data/potential-customers.csv", sep=';', index_col=0)
+    potential_customerss = pd.read_csv("data/potential-customers.csv", sep=';', index_col=0)
 
     potential_customers['class'] = y_pred
-    potential_customers.to_csv("data/potential-customers.csv", index=False)
+    potential_customers.to_csv("data/potential-customers-output.csv", index=False)
 
+    #compute the distance between potential and existing clients
+    highIncomesExisting = existing_customers[existing_customers['class'] == 1]
+    lowIncomesExisting = existing_customers[existing_customers['class'] == 0]
+    highIncomesPotential = potential_customers[potential_customers['class'] == 1]
+    lowIncomesPotential = potential_customers[potential_customers['class'] == 0]
+    print(len(highIncomesExisting))
+    print(len(lowIncomesExisting))
+    print(len(highIncomesPotential))
+    print(len(lowIncomesPotential))
+    nbrs = NearestNeighbors(n_neighbors=1, algorithm='ball_tree').fit(highIncomesExisting)
+    distancesHigh, indicesHigh = nbrs.kneighbors(highIncomesPotential)
+    distancesHigh = np.argsort(distancesHigh)
+    threshold_idxHigh = int(len(highIncomesPotential) * 0.1)
+    threshold_distanceHigh = distancesHigh[:, threshold_idxHigh].max()
+    selected_rowsHigh = np.where(distancesHigh[:, -1] <= threshold_distanceHigh)[0]
+    selected_dataHigh = potential_customers[selected_rowsHigh, :]
+    print(len(selected_dataHigh))
 
-
+    nbrs = NearestNeighbors(n_neighbors=1, algorithm='ball_tree').fit(lowIncomesExisting)
+    distancesLow, indicesLow = nbrs.kneighbors(lowIncomesPotential)
+    threshold_idxLow = int(len(lowIncomesPotential) * 0.05)
+    threshold_distanceLow = distancesLow[:, threshold_idxLow].max()
+    selected_rowsLow = np.where(distancesLow[:, -1] <= threshold_distanceLow)[0]
+    selected_dataLow = potential_customers[selected_rowsLow, :]
+    print(len(selected_dataLow))
 
 
