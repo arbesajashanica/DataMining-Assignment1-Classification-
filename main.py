@@ -243,8 +243,8 @@ if __name__ == '__main__':
     lowIncomesExisting = existing_customers[existing_customers['class'] == 0]
     highIncomesPotential = potential_customers[potential_customers['class'] == 1]
     lowIncomesPotential = potential_customers[potential_customers['class'] == 0]
-    NumberHigh = len(highIncomesPotential) * 0.1
-    NumberLow = len(lowIncomesPotential) * 0.05
+    NumberHigh = round(len(highIncomesPotential) * 0.1)
+    NumberLow = round(len(lowIncomesPotential) * 0.05)
     print("len(highIncomesPotential)",len(highIncomesPotential))
     print("len(lowIncomesPotential)",len(lowIncomesPotential))
     Profit = NumberHigh * 980 + NumberLow * (-310)
