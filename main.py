@@ -23,15 +23,9 @@ if __name__ == '__main__':
     # read input data and check which columns has missing values
     existing_customers = pd.read_csv("data/existing-customers.csv", sep=';', index_col=0)
     potential_customers = pd.read_csv("data/potential-customers.csv", sep=';', index_col=0)
-    print(potential_customers.columns)
-    print(existing_customers.columns)
-
 
     original_data = existing_customers.replace('', pd.NaT)
     original_data2 = potential_customers.replace('', pd.NaT)
-
-    print(existing_customers.isna().sum())
-    print(potential_customers.isna().sum())
 
     # fill in the missing values using most frequent using the SimpleImputer
     imputer = SimpleImputer(strategy="most_frequent")
@@ -48,8 +42,6 @@ if __name__ == '__main__':
 
     for col in categoricalColumnsPot:
         potential_customers[col] = le.fit_transform(potential_customers[col])
-    print(existing_customers.iloc[19])
-    print(existing_customers)
 
     # Normalize data of existing_customers using the MinMaxScaler
     scaler = preprocessing.MinMaxScaler()
@@ -63,23 +55,12 @@ if __name__ == '__main__':
 
     existing_customers[columnsToBeNormalized] = normalizedData
     potential_customers[columnsToBeNormalized] = normalizedDataPotential
-    print(existing_customers.iloc[21389])
 
     #splitting the data in a train and test set using the train_test_split function
     features = existing_customers.iloc[:, :-1]
     label = existing_customers.iloc[:, -1]
 
     X_train, X_test, y_train, y_test = train_test_split(features, label, test_size=0.3,random_state=42)
-    print(X_train)
-    print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-    print(X_test)
-    print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-    print(y_train)
-    print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-    print(y_test)
-
-
-
 
     #apply classifier1: GaussianNB()
     gnbModel = GaussianNB()
@@ -136,18 +117,6 @@ if __name__ == '__main__':
     print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
 
 
-    # XGBClassifier
-    X_train, X_test, y_train, y_test = train_test_split(features, label, test_size=0.3,random_state=42)
-    xgb = XGBClassifier()
-    xgb.fit(X_train, y_train)
-    y_pred = xgb.predict(X_test)
-    print("XGBClassifier")
-    print("Accuracy:", accuracy_score(y_test, y_pred))
-    print("Precision:", precision_score(y_test, y_pred))
-    print("Recall:", recall_score(y_test, y_pred))
-    print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-
-
     #Decision tree
     clf = DecisionTreeClassifier(random_state=42)
     param_grid = {'max_depth': [2, 3, 4, 5, 6, 7, 8, 9, 10]}
@@ -161,12 +130,14 @@ if __name__ == '__main__':
     y_pred = clf.predict(X_test)
     accuracy = clf.score(X_test, y_test)
     print("Accuracy:", accuracy)
+    print("Precision:", precision_score(y_test, y_pred))
+    print("Recall:", recall_score(y_test, y_pred))
     featureNamse =  ['age', 'workclass', 'education', 'education-num', 'marital-status','occupation', 'relationship','race', 'sex','capital-gain','capital-loss', 'hours-per-week', 'native-country']
-    dot_data = export_graphviz(clf, out_file=None,
-                               feature_names=featureNamse,
-                               class_names="class",
-                               filled=True, rounded=True,
-                               special_characters=True)
+    #dot_data = export_graphviz(clf, out_file=None,
+    #                           feature_names=featureNamse,
+    #                           class_names="class",
+    #                           filled=True, rounded=True,
+    #                           special_characters=True)
 
     # Use the GraphViz library to display the decision tree
     #graph = graphviz.Source(dot_data)
@@ -197,6 +168,9 @@ if __name__ == '__main__':
     accuracy = ada_boost.score(X_test, y_test)
     print("Boosting")
     print(f"Accuracy: {accuracy}")
+    print("Precision:", precision_score(y_test, y_pred))
+    print("Recall:", recall_score(y_test, y_pred))
+
 
     param_grid = {
         'n_estimators': [50, 100, 150, 200, 250]
@@ -204,19 +178,34 @@ if __name__ == '__main__':
     gb_clf = GradientBoostingClassifier()
     grid_search = GridSearchCV(gb_clf, param_grid, cv=5)
     grid_search.fit(X_train, y_train)
-    print("Best Hyperparameters:", grid_search.best_params_)
-    print("Best Accuracy Score:", grid_search.best_score_)
+    print("Best Hyperparameters with GridSearchCV :", grid_search.best_params_)
+    print("Best Accuracy Score with GridSearchCV: ", grid_search.best_score_)
+    print("GradientBoostingClassifier")
+    gbt = GradientBoostingClassifier()
+    gbt.fit(X_train, y_train)
+
+    y_pred = gbt.predict(X_test)
+    accuracy = gbt.score(X_test, y_test)
+    print(f"Accuracy: {accuracy}")
+    print("Precision:", precision_score(y_test, y_pred))
+    print("Recall:", recall_score(y_test, y_pred))
+
 
     print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     param_grid = {
         'n_estimators': [50, 100, 150, 200, 250]
     }
+    # use classifier RandomForestClassifier
     rfc = RandomForestClassifier(n_estimators=100, random_state=42)
     rfc.fit(X_train, y_train)
     y_pred = rfc.predict(X_test)
     accuracy = rfc.score(X_test, y_test)
     print("RandomForestClassifier")
     print(f"Accuracy: {accuracy}")
+    print("Precision:", precision_score(y_test, y_pred))
+    print("Recall:", recall_score(y_test, y_pred))
+
+    #check which estimator gives the best results
     rfc = RandomForestClassifier(random_state=42)
     param_grid = {
         'n_estimators': [50, 100, 150, 200, 250]
@@ -227,58 +216,57 @@ if __name__ == '__main__':
     print("Best Accuracy Score:", grid_search.best_score_)
 
 
-
-
     # Predict the labels of potential customers
     X_pred = potential_customers.iloc[:, :]
-    #y_pred = potential_customers.iloc[:, -1]
     X = existing_customers.iloc[:, :-1]
     Y = existing_customers.iloc[:, -1]
-    base_estimator = DecisionTreeClassifier(max_depth=8)
-    ada_boost = AdaBoostClassifier(estimator=base_estimator, n_estimators=250, random_state=42)
-    ada_boost.fit(X, Y)
 
-    y_pred = ada_boost.predict(X_pred)
+    gbt = GradientBoostingClassifier()
+    gbt.fit(X, Y)
+    y_pred = gbt.predict(X_pred)
+
+    #base_estimator = DecisionTreeClassifier(max_depth=8)
+    #ada_boost = AdaBoostClassifier(estimator=base_estimator, n_estimators=250, random_state=42)
+    #ada_boost.fit(X, Y)
+    #y_pred = ada_boost.predict(X_pred)
+
     potential_customerss = pd.read_csv("data/potential-customers.csv", sep=';', index_col=0)
-
     potential_customers['class'] = y_pred
     potential_customers.to_csv("data/potential-customers-output.csv", index=False)
 
+    print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     #compute the distance between potential and existing clients
+    # Take the top 10% potential high income clients with the smallest distance to the nearest existing client
+    # The same of low income but instead of 10% we take 5%
+    # Write top 10% and 5% rowIDs to corresponding file
     highIncomesExisting = existing_customers[existing_customers['class'] == 1]
     lowIncomesExisting = existing_customers[existing_customers['class'] == 0]
     highIncomesPotential = potential_customers[potential_customers['class'] == 1]
     lowIncomesPotential = potential_customers[potential_customers['class'] == 0]
-    print("lowIncomesPotential")
-    print(len(lowIncomesPotential))
-    print((lowIncomesPotential))
-    print("highIncomesPotential")
-    print(len(highIncomesPotential))
-    print((highIncomesPotential))
+    NumberHigh = len(highIncomesPotential) * 0.1
+    NumberLow = len(lowIncomesPotential) * 0.05
+    print("len(highIncomesPotential)",len(highIncomesPotential))
+    print("len(lowIncomesPotential)",len(lowIncomesPotential))
+    Profit = NumberHigh * 980 + NumberLow * (-310)
+    print("Profit",Profit )
+    TotalCost = (NumberHigh + NumberLow)*10
+    print("TotalCost",TotalCost)
+    TotalRevenue = Profit - TotalCost
+    print("TotalRevenue",TotalRevenue)
 
+
+    # For high income
     nbrs = NearestNeighbors(n_neighbors=1, algorithm='ball_tree').fit(highIncomesExisting)
     distancesHigh, indicesHigh = nbrs.kneighbors(highIncomesPotential)
-
     sorted_indices = np.argsort(distancesHigh[:, 0])
-    print("sorted_indices",sorted_indices)
-    selected_rowsHigh = sorted_indices[:247]
-    print("selected_rowsHigh",selected_rowsHigh)
+    selected_rowsHigh = sorted_indices[:291]
     selected_dataHigh = highIncomesPotential.iloc[selected_rowsHigh, :]
-    print("selected_dataHigh",selected_dataHigh)
     selected_dataHigh.index.to_series().to_csv('PotentialNewHighIncomeClients.txt', index=False)
 
-
+    # For low income
     nbrs = NearestNeighbors(n_neighbors=1, algorithm='ball_tree').fit(lowIncomesExisting)
     distancesLow, indicesLow = nbrs.kneighbors(lowIncomesPotential)
-
     sorted_indices = np.argsort(distancesLow[:, 0])
-    print("sorted_indices",sorted_indices)
-    selected_rowsLow = sorted_indices[:690]
-    print("selected_rowsLow",selected_rowsLow)
+    selected_rowsLow = sorted_indices[:669]
     selected_dataLow = lowIncomesPotential.iloc[selected_rowsLow, :]
-    print("selected_dataLow",selected_dataLow)
     selected_dataLow.index.to_series().to_csv('PotentialNewLowIncomeClients.txt', index=False)
-
-
-
-
