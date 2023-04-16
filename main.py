@@ -249,25 +249,36 @@ if __name__ == '__main__':
     lowIncomesExisting = existing_customers[existing_customers['class'] == 0]
     highIncomesPotential = potential_customers[potential_customers['class'] == 1]
     lowIncomesPotential = potential_customers[potential_customers['class'] == 0]
-    print(len(highIncomesExisting))
-    print(len(lowIncomesExisting))
-    print(len(highIncomesPotential))
+    print("lowIncomesPotential")
     print(len(lowIncomesPotential))
+    print((lowIncomesPotential))
+    print("highIncomesPotential")
+    print(len(highIncomesPotential))
+    print((highIncomesPotential))
+
     nbrs = NearestNeighbors(n_neighbors=1, algorithm='ball_tree').fit(highIncomesExisting)
     distancesHigh, indicesHigh = nbrs.kneighbors(highIncomesPotential)
-    distancesHigh = np.argsort(distancesHigh)
-    threshold_idxHigh = int(len(highIncomesPotential) * 0.1)
-    threshold_distanceHigh = distancesHigh[:, threshold_idxHigh].max()
-    selected_rowsHigh = np.where(distancesHigh[:, -1] <= threshold_distanceHigh)[0]
-    selected_dataHigh = potential_customers[selected_rowsHigh, :]
-    print(len(selected_dataHigh))
+
+    sorted_indices = np.argsort(distancesHigh[:, 0])
+    print("sorted_indices",sorted_indices)
+    selected_rowsHigh = sorted_indices[:247]
+    print("selected_rowsHigh",selected_rowsHigh)
+    selected_dataHigh = highIncomesPotential.iloc[selected_rowsHigh, :]
+    print("selected_dataHigh",selected_dataHigh)
+    selected_dataHigh.index.to_series().to_csv('PotentialNewHighIncomeClients.txt', index=False)
+
 
     nbrs = NearestNeighbors(n_neighbors=1, algorithm='ball_tree').fit(lowIncomesExisting)
     distancesLow, indicesLow = nbrs.kneighbors(lowIncomesPotential)
-    threshold_idxLow = int(len(lowIncomesPotential) * 0.05)
-    threshold_distanceLow = distancesLow[:, threshold_idxLow].max()
-    selected_rowsLow = np.where(distancesLow[:, -1] <= threshold_distanceLow)[0]
-    selected_dataLow = potential_customers[selected_rowsLow, :]
-    print(len(selected_dataLow))
+
+    sorted_indices = np.argsort(distancesLow[:, 0])
+    print("sorted_indices",sorted_indices)
+    selected_rowsLow = sorted_indices[:690]
+    print("selected_rowsLow",selected_rowsLow)
+    selected_dataLow = lowIncomesPotential.iloc[selected_rowsLow, :]
+    print("selected_dataLow",selected_dataLow)
+    selected_dataLow.index.to_series().to_csv('PotentialNewLowIncomeClients.txt', index=False)
+
+
 
 
